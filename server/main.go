@@ -11,6 +11,7 @@ import (
 
 	"github.com/mauroloaiza/groovy/server/internal/db"
 	"github.com/mauroloaiza/groovy/server/internal/library"
+	"github.com/mauroloaiza/groovy/server/internal/stream"
 )
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 	})
 
 	r.Mount("/api/library", library.Router(database, musicDir))
+	r.Mount("/api/stream", stream.Router(database))
 
 	port := os.Getenv("PORT")
 	if port == "" {
