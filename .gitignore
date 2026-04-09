@@ -16,6 +16,11 @@ android/local.properties
 *.apk
 *.aab
 
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+
 # Docker / env
 .env
 
