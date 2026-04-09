@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: groovy
+      POSTGRES_USER: groovy
+      POSTGRES_PASSWORD: groovy
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  icecast:
+    image: moul/icecast
+    ports:
+      - "8000:8000"
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./server:/app
+      - ${MUSIC_DIR:-./music}:/music:ro
+    environment:
+      - DB_URL=postgres://groovy:groovy@postgres:5432/groovy?sslmode=disable
+      - ICECAST_URL=http://icecast:8000
+      - ICECAST_SOURCE_PASSWORD=hackme
+      - MUSIC_DIR=/music
+      - PORT=8080
+    depends_on:
+      - postgres
+      - icecast
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:

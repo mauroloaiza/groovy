@@ -1,0 +1,24 @@
+# Go
+server/bin/
+*.exe
+*.test
+*.out
+
+# Node
+web/node_modules/
+web/dist/
+web/.env.local
+
+# Android
+android/.gradle/
+android/build/
+android/local.properties
+*.apk
+*.aab
+
+# Docker / env
+.env
+
+# OS
+.DS_Store
+Thumbs.db
