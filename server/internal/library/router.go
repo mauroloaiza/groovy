@@ -1,22 +1,22 @@
 package library
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type handler struct {
-	store   *Store
-	scanner *Scanner
+	store    *Store
+	scanner  *Scanner
 	musicDir string
 }
 
-func Router(db *pgxpool.Pool, musicDir string) http.Handler {
+func Router(db *sql.DB, musicDir string) http.Handler {
 	store := NewStore(db)
 	h := &handler{
 		store:    store,
@@ -38,7 +38,6 @@ func Router(db *pgxpool.Pool, musicDir string) http.Handler {
 	return r
 }
 
-// POST /scan
 func (h *handler) scan(w http.ResponseWriter, r *http.Request) {
 	dir := r.URL.Query().Get("dir")
 	if dir == "" {
@@ -48,15 +47,13 @@ func (h *handler) scan(w http.ResponseWriter, r *http.Request) {
 		dir = os.Getenv("MUSIC_DIR")
 	}
 	if dir == "" {
-		http.Error(w, "music dir not configured", http.StatusBadRequest)
+		http.Error(w, "music dir not configured — pass ?dir=/path/to/music", http.StatusBadRequest)
 		return
 	}
-
 	result := h.scanner.Scan(r.Context(), dir)
 	writeJSON(w, http.StatusOK, result)
 }
 
-// GET /artists
 func (h *handler) listArtists(w http.ResponseWriter, r *http.Request) {
 	artists, err := h.store.ListArtists(r.Context())
 	if err != nil {
@@ -66,7 +63,6 @@ func (h *handler) listArtists(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, artists)
 }
 
-// GET /artists/:id
 func (h *handler) getArtist(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
 	if err != nil {
@@ -85,7 +81,6 @@ func (h *handler) getArtist(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, artist)
 }
 
-// GET /artists/:id/albums
 func (h *handler) listAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
 	if err != nil {
@@ -100,7 +95,6 @@ func (h *handler) listAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, albums)
 }
 
-// GET /artists/:id/tracks
 func (h *handler) listTracksByArtist(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
 	if err != nil {
@@ -115,7 +109,6 @@ func (h *handler) listTracksByArtist(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, tracks)
 }
 
-// GET /albums/:id
 func (h *handler) getAlbum(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
 	if err != nil {
@@ -134,7 +127,6 @@ func (h *handler) getAlbum(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, album)
 }
 
-// GET /albums/:id/tracks
 func (h *handler) listTracksByAlbum(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
 	if err != nil {
@@ -149,7 +141,6 @@ func (h *handler) listTracksByAlbum(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, tracks)
 }
 
-// GET /tracks/:id
 func (h *handler) getTrack(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r, "id")
 	if err != nil {
@@ -168,7 +159,6 @@ func (h *handler) getTrack(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, track)
 }
 
-// GET /search?q=...
 func (h *handler) search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	if q == "" {

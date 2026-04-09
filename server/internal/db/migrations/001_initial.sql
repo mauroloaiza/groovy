@@ -1,32 +1,32 @@
 CREATE TABLE IF NOT EXISTS artists (
-    id         BIGSERIAL PRIMARY KEY,
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
     name       TEXT NOT NULL UNIQUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS albums (
-    id         BIGSERIAL PRIMARY KEY,
-    artist_id  BIGINT NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    artist_id  INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
     name       TEXT NOT NULL,
-    year       INT,
+    year       INTEGER,
     cover_path TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (artist_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS tracks (
-    id           BIGSERIAL PRIMARY KEY,
-    album_id     BIGINT REFERENCES albums(id) ON DELETE SET NULL,
-    artist_id    BIGINT REFERENCES artists(id) ON DELETE CASCADE,
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    album_id     INTEGER REFERENCES albums(id) ON DELETE SET NULL,
+    artist_id    INTEGER REFERENCES artists(id) ON DELETE CASCADE,
     title        TEXT NOT NULL,
-    track_number INT,
-    disc_number  INT,
-    duration_sec INT,
+    track_number INTEGER,
+    disc_number  INTEGER,
+    duration_sec INTEGER,
     file_path    TEXT NOT NULL UNIQUE,
     format       TEXT,
-    bitrate      INT,
-    size_bytes   BIGINT,
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    bitrate      INTEGER,
+    size_bytes   INTEGER,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS tracks_artist_id_idx ON tracks(artist_id);

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,13 +14,11 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-
-	pool, err := db.Connect(ctx)
+	database, err := db.Connect()
 	if err != nil {
 		log.Fatalf("db: %v", err)
 	}
-	defer pool.Close()
+	defer database.Close()
 
 	musicDir := os.Getenv("MUSIC_DIR")
 
@@ -35,15 +32,24 @@ func main() {
 		fmt.Fprintln(w, `{"status":"ok","service":"groovy"}`)
 	})
 
-	r.Mount("/api/library", library.Router(pool, musicDir))
+	r.Mount("/api/library", library.Router(database, musicDir))
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	log.Printf("Groovy API listening on :%s", port)
+	log.Printf("Groovy API  →  http://localhost:%s", port)
+	log.Printf("DB          →  %s", dbPath())
+	log.Printf("Music dir   →  %s", musicDir)
 	log.Fatal(http.ListenAndServe(":"+port, r))
+}
+
+func dbPath() string {
+	if p := os.Getenv("DB_PATH"); p != "" {
+		return p
+	}
+	return "groovy.db"
 }
 
 func cors(next http.Handler) http.Handler {

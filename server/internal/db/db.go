@@ -1,54 +1,54 @@
 package db
 
 import (
-	"context"
+	"database/sql"
 	"embed"
 	"fmt"
 	"os"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "modernc.org/sqlite"
 )
 
 //go:embed migrations/*.sql
 var migrations embed.FS
 
-func Connect(ctx context.Context) (*pgxpool.Pool, error) {
-	url := os.Getenv("DB_URL")
-	if url == "" {
-		url = "postgres://groovy:groovy@localhost:5432/groovy?sslmode=disable"
+func Connect() (*sql.DB, error) {
+	path := os.Getenv("DB_PATH")
+	if path == "" {
+		path = "groovy.db"
 	}
 
-	pool, err := pgxpool.New(ctx, url)
+	db, err := sql.Open("sqlite", path)
 	if err != nil {
-		return nil, fmt.Errorf("db connect: %w", err)
+		return nil, fmt.Errorf("db open: %w", err)
 	}
 
-	if err := pool.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("db ping: %w", err)
+	// SQLite: single writer, enable WAL for better read concurrency.
+	db.SetMaxOpenConns(1)
+	if _, err := db.Exec("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;"); err != nil {
+		return nil, fmt.Errorf("db pragma: %w", err)
 	}
 
-	if err := migrate(ctx, pool); err != nil {
+	if err := migrate(db); err != nil {
 		return nil, fmt.Errorf("db migrate: %w", err)
 	}
 
-	return pool, nil
+	return db, nil
 }
 
-func migrate(ctx context.Context, pool *pgxpool.Pool) error {
+func migrate(db *sql.DB) error {
 	entries, err := migrations.ReadDir("migrations")
 	if err != nil {
 		return err
 	}
-
 	for _, e := range entries {
 		sql, err := migrations.ReadFile("migrations/" + e.Name())
 		if err != nil {
 			return err
 		}
-		if _, err := pool.Exec(ctx, string(sql)); err != nil {
+		if _, err := db.Exec(string(sql)); err != nil {
 			return fmt.Errorf("migration %s: %w", e.Name(), err)
 		}
 	}
-
 	return nil
 }
