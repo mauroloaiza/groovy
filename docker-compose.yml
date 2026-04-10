@@ -1,0 +1,30 @@
+services:
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8080"
+    volumes:
+      - ${MUSIC_DIR:-/music}:/music:ro
+      - groovy_db:/data
+    environment:
+      - DB_PATH=/data/groovy.db
+      - MUSIC_DIR=/music
+      - PORT=8080
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://${HOST_IP:-localhost}:8090
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  groovy_db:
