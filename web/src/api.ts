@@ -1,4 +1,5 @@
-const BASE = '/api'
+const API_ORIGIN = import.meta.env.VITE_API_URL ?? ''
+const BASE = `${API_ORIGIN}/api`
 
 export interface Artist {
   id: number
@@ -43,4 +44,4 @@ export const api = {
     }).then((r) => r.json()),
 }
 
-export const streamUrl = (trackId: number) => `/api/stream/${trackId}`
+export const streamUrl = (trackId: number) => `${API_ORIGIN}/api/stream/${trackId}`
